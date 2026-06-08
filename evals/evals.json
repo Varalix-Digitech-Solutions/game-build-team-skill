@@ -1,0 +1,29 @@
+{
+  "skill_name": "game-build-team",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build the building-placement feature for the isometric base — fully tested, verified on screen, and it should feel satisfying to place a building.",
+      "expected_output": "Manager reads the design contract + extracts project invariants, runs Phase 0/1, sizes the wave via capacity.mjs, writes a feature entry + state.json, and launches the game-build-loop Workflow. The Creative Director writes the brief (interaction model + juice plan), the Logic Developer builds placement logic + real tests, the Animation Developer adds snap/dust/feedback, the Tester gate runs the headless suite (green) + screenshot vs the contract, then the Creative gate confirms it feels right. It iterates to OK on both gates, a final full-suite regression passes, and the Manager does an on-device final check. The Manager never edits a feature file itself.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I have three small UI features for the game; build them all to spec with the test suite green and don't stop until each passes the gates.",
+      "expected_output": "Three features added to state.json, the Workflow builds them in waves sized to the host, each runs its own enforced brief->logic->juice->test-gate->creative-gate loop with the maxRounds cap, every passing feature is durably marked tested then done, flagged features are surfaced to the Manager, and a final regression gates the batch.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Continue the game-build-team run I paused yesterday.",
+      "expected_output": "Manager runs state.mjs reconcile, reports status (done/tested/built/pending/flagged), and relaunches via the durable path — skipping done features, running the creative gate only on tested ones, test-first re-validating built ones — without redoing approved work.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Just use the build team to add the feature.",
+      "expected_output": "On invoke the Manager does NOT start editing .gd files. It reads CLAUDE.md + the design contract, restates the feature, runs Phase 0/1, and dispatches the team via the Workflow. If at any point the Manager is about to edit a feature file, the pre-edit tripwire stops it and it dispatches a Developer instead.",
+      "files": []
+    }
+  ]
+}

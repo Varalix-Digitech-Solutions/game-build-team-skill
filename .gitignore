@@ -1,0 +1,18 @@
+# Internal refinement log — kept locally, never pushed to the public repo
+REFINEMENT.md
+
+# Runtime state written into target projects (never part of the skill)
+.game-build-team/
+
+# Node
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
