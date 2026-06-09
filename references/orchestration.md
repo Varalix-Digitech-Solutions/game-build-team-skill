@@ -1,7 +1,23 @@
 # Orchestration — the team, the two-gate loop, and the Workflow
 
 Operating manual for the Manager (the main-thread Claude running the
-`game-build-team` skill). Read before Phase 2.
+`game-build-team` skill). Read before Phase 3 (the build loop).
+
+## The phase machine (every session, no arbitrary order)
+
+```
+0 ask user → 1 RECON ▶wf → (blockers? tell user, stop) → 2 plan → 3 BUILD ▶wf → 4 final gate → 5 finish + suggest next
+```
+
+The **fan-out phases (1 recon, 3 build/verify) are Workflows** — governed, resumable,
+no scatter. Phases **0, 2, 4, 5 are main-thread** because they need the **user** (an
+interactive question/sign-off) or a **holistic real-hand pass** on the live device —
+but they are **fixed scripted steps**, never improvisation. The one genuine Workflow
+limit is that it **cannot ask the user a question mid-run** (it runs in the background).
+It CAN drive `adb` — agents have `Bash`, so the build loop deploys to the device itself
+(`godot_verify.sh --deploy`); the device just gets serialized on a lock so parallel
+features don't collide. Phase 4 stays in your thread for the *cross-feature* judgment,
+not because the Workflow is blind to the device.
 
 ## Why a Workflow, and not "just spawn agents and iterate"
 
@@ -23,9 +39,12 @@ build in parallel* is `runConfig.waveSize`, which the Manager sizes to the host 
 `scripts/capacity.mjs`. Same skill, big box → wide waves, tight box → narrow waves,
 nothing OOM-killed.
 
-The Manager still owns everything the Workflow can't: talking to the user, gathering
-requirements + the project invariants, recon, the feature list, launching/steering the
-Workflow, the human final gate, and the resume decisions.
+The Manager still owns everything the Workflow can't: talking to the user (Phase 0),
+gathering requirements + the project invariants, synthesizing the recon report into the
+plan (Phase 2), launching/steering both Workflows, the human on-device final gate
+(Phase 4), the finish + next-steps suggestion (Phase 5), and the resume decisions.
+Recon itself is now its own Workflow (`workflows/recon.js`, Phase 1) — the Manager
+launches it and acts on its report (blockers → tell the user to install, then stop).
 
 > A Workflow runs in the **background** and **cannot talk to the user mid-run**.
 > Anything interactive (requirements, checkpoint sign-off) happens in the Manager's
@@ -35,9 +54,9 @@ Workflow, the human final gate, and the resume decisions.
 
 ```
         user  ⇄  MANAGER (you, main thread, holds the goal + invariants)
-                 │  Phase 0 requirements + extract project invariants
-                 │  Phase 1 recon + capacity probe + feature list
-                 │  Phase 3 human on-device final gate + report
+                 │  Phase 0 ask user + extract project invariants
+                 │  Phase 1 launch RECON ▶wf;  Phase 2 plan from its report
+                 │  Phase 4 on-device final gate;  Phase 5 finish + suggest next
                  └──────────────┬──────────────┘
                                 │ launches + steers
                       ┌─────────▼─────────┐
@@ -80,15 +99,19 @@ A feature is durably marked `tested` when the test gate passes, then `done` when
 creative gate also passes (resume keys off these). With `creativeGate: false` the test
 gate is the final gate and marks `done` directly.
 
-Then the **Manager's on-device final gate** (Phase 3) — the one gate the in-Workflow
-Tester can't do, because it can't see the live game. This closes the gap noted in the
-project's history: visual/feel truth requires the Manager driving the real device.
+Then the **Manager's on-device final gate** (Phase 4) — a holistic, real-hardware pass
+over the whole delivery. The in-Workflow Tester now sees the live game itself: it can
+build+deploy the fresh APK to the device (`godot_verify.sh --deploy`) and screencap it,
+or render the fresh source tree, recording which fidelity it got. So Phase 4 is the
+*cross-feature, real-hand* confirmation on top of those per-feature checks — features
+interacting, the whole thing feeling right — not a capability the Tester lacks.
 
-## How the Manager launches the Workflow
+## How the Manager launches the build Workflow
 
-1. Finish Phase 0 + Phase 1 so `.game-build-team/state.json` has: goal, projectDir,
-   godotBin, the **feature list**, run-config (incl. `waveSize` from capacity.mjs),
-   the **project invariants**, and the paths block.
+1. Finish Phases 0–2 so `.game-build-team/state.json` has: goal, projectDir,
+   godotBin, the **feature list** (planned from the recon report, with reuse targets),
+   run-config (incl. `waveSize` from recon's `capacity`), the **project invariants**,
+   and the paths block (incl. `statePath` AND `reportPath`).
 2. Read the `agents/*.md` files; pass their bodies as `args.personas.{creative,logic,
    animation,tester,docs}`. Pass `args.projectInvariants` = the laws you extracted.
 3. Call `Workflow` with `{ scriptPath: "<skillDir>/workflows/game-build-loop.js",
@@ -98,7 +121,7 @@ project's history: visual/feel truth requires the Manager driving the real devic
    `projectDir`, `godot=<bin>`, `features=N`, and the expected `waveSize` — not the
    defaults. `features=0` is a misfire to fix, never an empty "success".
 5. Record the `runId` (`node scripts/state.mjs set-run --run-id <id>`). Watch with
-   `/workflows`. On the notification, read the structured return and go to Phase 3.
+   `/workflows`. On the notification, read the structured return and go to Phase 4.
 
 ## Model-tier wiring
 
@@ -130,18 +153,20 @@ Manager runs in the session model. Let the user choose at Phase 0. Never hard-co
 ## skipFinal / checkpoint mode
 
 - `skipFinal: true` — build + gate features only; the Manager runs the final
-  full-suite regression in Phase 3.
+  full-suite regression in Phase 4.
 - **Checkpoint-at-gates** (non-autonomous): launch the Workflow for one feature (or a
   small batch), report the gate verdicts to the user, get sign-off, continue.
 
-## Workflow MANDATORY — and the one sanctioned exception
+## Workflow MANDATORY — no exceptions, no side-dispatch
 
-The Workflow is the **mandatory** path for logic features. The **only** sanctioned
-alternative is **per-feature Manager-in-the-loop dispatch** for a feature whose feel
-genuinely needs the Manager's on-device eyeball *between* steps (the in-Workflow
-Tester can't see the live game): Manager → Creative Director (brief) → Logic Developer
-→ Animation Developer → Tester → Manager drives the device → next. This is still
-dispatch — the Manager writes ZERO feature code. Ad-hoc hand-coding is never sanctioned.
+The Workflow is the **only** path that builds or verifies a feature. There is **no**
+per-feature side-dispatch and **no** spawning a build/verify agent from the main thread —
+that discretion is exactly what this skill removes. Build, juice, test, *and* on-device
+`--deploy` all happen inside the pipeline (the Tester drives the device there). If you want
+on-device confidence between steps, that is the Tester's `--deploy` at the gate, or your
+**own** `Bash`/`adb` check in the main thread (a tool, not an agent) — never an `Agent(...)`
+you spin up yourself. The Manager writes ZERO feature code and spawns ZERO build/verify
+agents; ad-hoc hand-coding and main-thread verify-agents are both unsanctioned.
 
 ## The unit of work is a FEATURE
 

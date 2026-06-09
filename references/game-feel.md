@@ -1,10 +1,11 @@
-# Game-feel & juice playbook (degrade target)
+# Game-feel & juice playbook (craft reference)
 
-The self-contained fallback for the **Creative Director** and **Animation
-Developer** when GodotPrompter's `tween-animation` / `animation-system` /
-`particles-vfx` / `camera-system` / `emil-design-eng` aren't installed. Same
-taxonomy those skills carry, distilled for a mobile isometric strategy/sim game
-(Clash-of-Clans base-building + Plague-Inc-style simulation).
+The shared juice taxonomy + timing rules for the **Creative Director** and **Animation
+Developer**. It is a *craft reference* they cite alongside GodotPrompter's
+`tween-animation` / `animation-system` / `particles-vfx` / `camera-system` /
+`emil-design-eng` (installed from source on init — there is no fallback; this doc
+complements those skills, it does not replace one that's missing). Distilled for a
+mobile isometric strategy/sim game (grid base-building + spread-style simulation).
 
 ## What "juice" is (and isn't)
 
