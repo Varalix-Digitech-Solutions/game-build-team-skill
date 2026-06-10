@@ -269,7 +269,12 @@ host; a single feature is one item):
    feel → Animation Developer) with full context; rebuild. Repeat until BOTH OK or
    the round cap (then the feature is **flagged** for you).
 
-Launch: read the agent files, pass them as `args.personas.{creative,logic,animation,
+Launch: **first start the usage watchdog** — `node "$SKILL_DIR/scripts/usage-watchdog.mjs"
+start --dir "$(pwd)"` as a background `Bash` (zero tokens; it writes `WRAP_UP`/`HARD_STOP`
+sentinels when the account's 5-hour usage window nears its cap, so agents wind down
+gracefully with handoff reports instead of dying mid-task — see
+`references/state-and-resume.md`). Then read the agent files, pass them as
+`args.personas.{creative,logic,animation,
 tester,docs}`, pass the extracted `args.projectInvariants`, and call `Workflow` with
 `{ scriptPath: "<skillDir>/workflows/game-build-loop.js", args: <state.json's goal +
 projectDir + godotBin + features + runConfig (incl. waveSize) + projectInvariants +
@@ -311,11 +316,18 @@ report what's done vs left. See `references/state-and-resume.md`.
   `done`/`tested` is safe on disk; the resume doc is current (that's the doc the next
   recon reads). Nothing else to do — no work is lost.
 - **`/game-build-team continue`** (alias: "resume") — `node scripts/state.mjs reconcile
-  --dir <proj>` (sync doc↔disk), **re-run Phase 1 recon** (so a changed environment is
-  re-checked and progress is re-read), then relaunch the build Workflow: same-session
-  via `resumeFromRunId`; cross-session via the durable path. The engine **skips `done`**,
-  runs **creative-gate-only on `tested`**, and **test-first on `built`** — so a resume
-  never redoes finished work.
+  --dir <proj>` (sync doc↔disk; also clears stale usage sentinels and attaches
+  `handoffPath` for features a wrapped-up run left behind), **re-run Phase 1 recon**
+  (so a changed environment is re-checked and progress is re-read), then relaunch the
+  build Workflow: same-session via `resumeFromRunId`; cross-session via the durable
+  path. The engine **skips `done`**, runs **creative-gate-only on `tested`**,
+  **test-first on `built`**, and points agents at their **handoff reports** — so a
+  resume never redoes finished work, even work wrapped up mid-feature.
+- **Usage cutoffs are handled proactively**: the watchdog (launched at Phase 3) trips a
+  **warm stop at ~80%** of the 5-hour window (agents finish the current step, write a
+  handoff, return) and a **hard stop at ~93%** (immediate flush). The Workflow drains —
+  remaining features come back `deferred` in `summary.deferred` — and the sentinel files
+  record `resets_at`, so you know exactly when to resume.
 
 ## Phase 5 — Finish & Suggest Next (you, main thread)
 
@@ -356,6 +368,7 @@ build exposed. The user may override or redirect — but you propose, every time
   recon-analyst, creative-director, logic-developer, animation-developer, tester, domain-architect.
 - `scripts/state.mjs` (durable lifecycle), `scripts/report.mjs` (durable outcome +
   HTML scorecard), `scripts/capacity.mjs` (dynamic sizing),
+  `scripts/usage-watchdog.mjs` (5-hour-window poller; warm/hard-stop sentinels),
   `scripts/godot_verify.sh` (the gate's hands), `scripts/install-deps.sh` (vendored
   skills), `workflows/recon.js` (Phase 1 reconnaissance),
   `workflows/game-build-loop.js` (Phase 3 enforcement engine),

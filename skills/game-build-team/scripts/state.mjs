@@ -128,6 +128,8 @@ switch (cmd) {
     console.log(`     pending:  ${by('pending').length}  ${by('pending').join(', ')}`)
     console.log(`     flagged:  ${by('flagged').length}  ${by('flagged').join(', ')}`)
     console.log(`  docs:    ${s.docs?.status} -> ${s.docs?.docPath}`)
+    const sentinels = ['WRAP_UP', 'HARD_STOP'].filter(n => fs.existsSync(path.join(stateDir, n)))
+    console.log(`  usage sentinels: ${sentinels.join(', ') || '(none)'}`)
     break
   }
   case 'set': {
@@ -188,6 +190,13 @@ switch (cmd) {
       changes.push(`projectDir: ${s.projectDir} -> ${abs} (rebased to actual location)`)
       s.projectDir = abs
     }
+    // usage-watchdog sentinels are per-window, so at resume time they are stale:
+    // clear them (the watchdog re-creates them within one poll if the window is
+    // still hot) so a resumed run isn't tripped by the previous cutoff.
+    for (const sn of ['WRAP_UP', 'HARD_STOP']) {
+      const p = path.join(stateDir, sn)
+      if (fs.existsSync(p)) { fs.unlinkSync(p); changes.push(`cleared stale usage sentinel ${sn}`) }
+    }
     for (const feat of s.features) {
       const fslug = (feat.name || '').replace(/[^a-z0-9-]/gi, '-').toLowerCase()
       if (!feat.specPath) {
@@ -197,6 +206,12 @@ switch (cmd) {
       if (!feat.briefPath) {
         const guess = path.join(featDir, fslug + '.brief.md')
         if (fs.existsSync(path.join(dir, guess))) { feat.briefPath = guess; changes.push(`${feat.name}: briefPath <- ${guess}`) }
+      }
+      // A handoff report means a prior run wrapped up mid-feature: surface it so
+      // the resumed agent continues from its NEXT STEP instead of redoing work.
+      if (!feat.handoffPath && !['done'].includes(feat.status)) {
+        const guess = path.join(featDir, fslug + '.handoff.md')
+        if (fs.existsSync(path.join(dir, guess))) { feat.handoffPath = guess; changes.push(`${feat.name}: handoffPath <- ${guess} (prior run wrapped up early)`) }
       }
       const exists = fileExistsFor(feat)
       const hasDeclaredFiles = (feat.targetFiles && feat.targetFiles.length) || feat.targetFile

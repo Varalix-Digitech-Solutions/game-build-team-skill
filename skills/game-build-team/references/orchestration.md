@@ -114,14 +114,24 @@ interacting, the whole thing feeling right — not a capability the Tester lacks
    and the paths block (incl. `statePath` AND `reportPath`).
 2. Read the `agents/*.md` files; pass their bodies as `args.personas.{creative,logic,
    animation,tester,docs}`. Pass `args.projectInvariants` = the laws you extracted.
-3. Call `Workflow` with `{ scriptPath: "<skillDir>/workflows/game-build-loop.js",
+3. **Start the usage watchdog** (background Bash, zero tokens):
+   `node "<skillDir>/scripts/usage-watchdog.mjs" start --dir <proj>` with
+   `run_in_background: true`. It polls the account's 5-hour usage window every
+   5 minutes and writes `WRAP_UP` (warm stop, ≥80%) / `HARD_STOP` (≥93%) sentinels
+   that the agents' wrap-up protocol checks — the run drains gracefully with
+   handoff reports instead of dying mid-agent at a cutoff. Details in
+   `references/state-and-resume.md`.
+4. Call `Workflow` with `{ scriptPath: "<skillDir>/workflows/game-build-loop.js",
    args: <the object above> }`. Pass `args` as a real JSON object (the engine also
    accepts a JSON string and aborts loudly on a bad/empty payload).
-4. **VERIFY THE LAUNCH (mandatory).** Confirm the startup `log()` shows your real
+5. **VERIFY THE LAUNCH (mandatory).** Confirm the startup `log()` shows your real
    `projectDir`, `godot=<bin>`, `features=N`, and the expected `waveSize` — not the
    defaults. `features=0` is a misfire to fix, never an empty "success".
-5. Record the `runId` (`node scripts/state.mjs set-run --run-id <id>`). Watch with
+6. Record the `runId` (`node scripts/state.mjs set-run --run-id <id>`). Watch with
    `/workflows`. On the notification, read the structured return and go to Phase 4.
+   If the return shows `summary.drained` / `summary.deferred`, the run wound down
+   early (usage cutoff or API failure): report it to the user, then resume later
+   via `reconcile` + relaunch — deferred features pick up from their handoffs.
 
 ## Model-tier wiring
 
