@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-deps.sh — install game-build-team's companion skills (vendored GodotPrompter).
+# install-deps.sh — install game-build-team's companion skills (vendored sources).
 #
 # THESE SKILLS ARE REQUIRED, NOT OPTIONAL. The build agents load them by name for
 # full-depth Godot domain guidance. There is NO fallback: the skill installs every
@@ -38,7 +38,12 @@ while [ $# -gt 0 ]; do
 done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VENDOR_SKILLS="$SCRIPT_DIR/../vendor/godot-prompter/skills"
+# Every vendored skill root (each contains <skill-name>/SKILL.md dirs). Adding a
+# new vendored source = adding one path here.
+VENDOR_ROOTS=(
+  "$SCRIPT_DIR/../vendor/godot-prompter/skills"
+  "$SCRIPT_DIR/../vendor/karpathy/skills"
+)
 
 if [ -n "${CLAUDE_SKILLS_DIR:-}" ]; then SKILLS_DIR="$CLAUDE_SKILLS_DIR"
 elif [ "$GLOBAL" = "1" ]; then SKILLS_DIR="$HOME/.claude/skills"
@@ -47,24 +52,29 @@ else SKILLS_DIR="$PWD/.claude/skills"
 fi
 mkdir -p "$SKILLS_DIR"
 
-if [ ! -d "$VENDOR_SKILLS" ]; then
-  echo "ERROR: vendored GodotPrompter source not found at $VENDOR_SKILLS" >&2
-  echo "The companion skills are REQUIRED and ship vendored in this repo. Re-fetch the source:" >&2
-  echo "  git clone --depth 1 https://github.com/jame581/GodotPrompter, copy its skills/ into vendor/godot-prompter/skills/" >&2
-  exit 1
-fi
+for root in "${VENDOR_ROOTS[@]}"; do
+  if [ ! -d "$root" ]; then
+    echo "ERROR: vendored skill source not found at $root" >&2
+    echo "The companion skills are REQUIRED and ship vendored in this repo (see vendor/*/ATTRIBUTION.md to re-fetch)." >&2
+    exit 1
+  fi
+done
 
-# Source-of-truth list: every vendored skill that has a SKILL.md.
-expected=()
-for skill_path in "$VENDOR_SKILLS"/*/; do
-  [ -f "$skill_path/SKILL.md" ] || continue
-  expected+=("$(basename "$skill_path")")
+# Source-of-truth list: every vendored skill (across all roots) that has a SKILL.md.
+expected=(); src_paths=()
+for root in "${VENDOR_ROOTS[@]}"; do
+  for skill_path in "$root"/*/; do
+    [ -f "$skill_path/SKILL.md" ] || continue
+    expected+=("$(basename "$skill_path")")
+    src_paths+=("${skill_path%/}")
+  done
 done
 TOTAL=${#expected[@]}
 
 installed=(); skipped=()
-for name in "${expected[@]}"; do
-  skill_path="$VENDOR_SKILLS/$name"
+for i in "${!expected[@]}"; do
+  name="${expected[$i]}"
+  skill_path="${src_paths[$i]}"
   if [ -e "$SKILLS_DIR/$name/SKILL.md" ]; then
     skipped+=("$name")
   elif [ "$CHECK" = "1" ]; then
@@ -83,7 +93,7 @@ for name in "${expected[@]}"; do
 done
 present=$(( TOTAL - ${#missing[@]} ))
 
-echo "GodotPrompter companion skills target: $SKILLS_DIR"
+echo "Companion skills (GodotPrompter + Karpathy) target: $SKILLS_DIR"
 echo "  required: $TOTAL   present: $present   newly installed: ${#installed[@]}   already there: ${#skipped[@]}"
 if [ "${#installed[@]}" -gt 0 ]; then echo "  installed: ${installed[*]}"; fi
 

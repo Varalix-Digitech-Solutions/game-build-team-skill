@@ -109,14 +109,14 @@ brief → build logic → juice pass → 🧪 TEST GATE → 🎨 CREATIVE GATE �
 | 🎨 **Creative Director** | first + last | the feature brief (UX + interaction + juice plan) **and** the fun gate |
 | ⚙️ **Logic Developer** | per feature | gameplay logic — state, economy, simulation, input |
 | ✨ **Animation Developer** | after logic | the juice / game-feel pass on the *same* files — feedback only |
-| 🧪 **Tester** | the gate | full regression: headless suite + on-device screenshot vs the design contract + invariants |
+| 🧪 **Tester** | the gate | rapid full regression: headless suite + fresh source-render vs the design contract + invariants (`--deploy` for device-specific features) |
 
 ### Two gates, both control flow
 
-1. **🧪 Test gate** — the headless GDScript suite exits 0, acceptance criteria are asserted, a **fresh on-device screenshot** matches the design contract, invariants hold. Otherwise the feature doesn't advance.
+1. **🧪 Test gate (rapid)** — the headless GDScript suite exits 0, acceptance criteria are asserted, a **fresh screenshot** (source-render simulation by default — seconds per round; on-device `--deploy` for device-specific features) matches the design contract, invariants hold. Otherwise the feature doesn't advance.
 2. **🎨 Creative gate** — once correct, the running feature is judged against its brief: *readable / responsive / satisfying / on-theme / fair.*
 
-Then the Manager runs a **cross-feature on-device final gate** — a real-hand pass over the whole delivery. The in-Workflow Tester already verifies each feature on the live device itself (`godot_verify.sh --deploy` builds, installs, and launches the fresh APK); the Manager's pass confirms they work *together*.
+Then the Manager runs the **thorough on-device final gate** — a real-hand pass over the whole delivery: `godot_verify.sh --deploy` builds, installs, and launches the fresh APK, confirming the features work *together* on real hardware. Keeping the in-loop gate on the fast simulation and spending the device pass once at the end is what keeps NG→fix iteration cheap.
 
 ### Deterministic order, dynamic scale
 
@@ -126,7 +126,7 @@ The step order is fixed, but how many features build in parallel is **sized to y
 
 ## 📦 Dependencies
 
-On invoke, preflight installs **48 companion Godot skills** ([GodotPrompter](https://github.com/jame581/GodotPrompter), MIT) from the repo's pinned `vendor/` into your project's `.claude/skills/` — **project-local, never global** — and **refuses to run until every one is present**:
+On invoke, preflight installs **49 companion skills** — 48 Godot domain skills ([GodotPrompter](https://github.com/jame581/GodotPrompter), MIT) plus [`karpathy-guidelines`](https://github.com/forrestchang/andrej-karpathy-skills) (MIT), the LLM coding-discipline layer the build/test agents load — from the repo's pinned `vendor/` into your project's `.claude/skills/` — **project-local, never global** — and **refuses to run until every one is present**:
 
 ```bash
 bash skills/game-build-team/scripts/install-deps.sh --dir /abs/path/to/your/godot-project   # run by preflight; exits non-zero if any dep is missing
@@ -150,6 +150,7 @@ skills/game-build-team/   the skill itself:
   references/              orchestration, skill map, verify playbook, game-feel, resume
   scripts/                 durable state, dynamic capacity probe, verify gate, installer
   vendor/godot-prompter/   vendored GodotPrompter skills (MIT)
+  vendor/karpathy/         vendored karpathy-guidelines skill (MIT)
   evals/                   behavioral evals for the skill
 ```
 
@@ -159,6 +160,7 @@ skills/game-build-team/   the skill itself:
 
 - Build/verify engine and resumable-Workflow pattern adapted from the **`clone-team`** skill.
 - Godot domain skills vendored from [jame581/GodotPrompter](https://github.com/jame581/GodotPrompter) (MIT) — see `vendor/godot-prompter/ATTRIBUTION.md`.
+- LLM coding-discipline skill vendored from [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (MIT), derived from Andrej Karpathy's observations on LLM coding pitfalls — see `vendor/karpathy/ATTRIBUTION.md`.
 
 ## 📄 License
 

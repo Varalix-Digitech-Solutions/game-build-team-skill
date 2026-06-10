@@ -100,11 +100,14 @@ creative gate also passes (resume keys off these). With `creativeGate: false` th
 gate is the final gate and marks `done` directly.
 
 Then the **Manager's on-device final gate** (Phase 4) — a holistic, real-hardware pass
-over the whole delivery. The in-Workflow Tester now sees the live game itself: it can
-build+deploy the fresh APK to the device (`godot_verify.sh --deploy`) and screencap it,
-or render the fresh source tree, recording which fidelity it got. So Phase 4 is the
-*cross-feature, real-hand* confirmation on top of those per-feature checks — features
-interacting, the whole thing feeling right — not a capability the Tester lacks.
+over the whole delivery. The in-Workflow Tester runs **rapid** rounds by default: the
+fresh source-render simulation (the same `drive_<slug>.gd` harness the developer
+used — seconds per round, so NG→fix iteration stays fast). It still CAN
+build+deploy the fresh APK (`godot_verify.sh --deploy`) and screencap the device —
+reserved for inherently device-specific features (touch input, safe-area/DPI,
+on-device perf), recording which fidelity it got. So Phase 4 is **the** thorough
+on-device pass of the run — fresh deploy, real hardware, features interacting, the
+whole thing feeling right in-hand — once, instead of minutes spent per round.
 
 ## How the Manager launches the build Workflow
 
@@ -171,11 +174,12 @@ Manager runs in the session model. Let the user choose at Phase 0. Never hard-co
 
 The Workflow is the **only** path that builds or verifies a feature. There is **no**
 per-feature side-dispatch and **no** spawning a build/verify agent from the main thread —
-that discretion is exactly what this skill removes. Build, juice, test, *and* on-device
-`--deploy` all happen inside the pipeline (the Tester drives the device there). If you want
-on-device confidence between steps, that is the Tester's `--deploy` at the gate, or your
-**own** `Bash`/`adb` check in the main thread (a tool, not an agent) — never an `Agent(...)`
-you spin up yourself. The Manager writes ZERO feature code and spawns ZERO build/verify
+that discretion is exactly what this skill removes. Build, juice, test, *and* any
+in-loop `--deploy` (device-specific features) all happen inside the pipeline (the
+Tester drives the device there). If you want on-device confidence between steps, that
+is the Tester's `--deploy` at the gate (device-specific features only — the gate is
+rapid by default), or your **own** `Bash`/`adb` check in the main thread (a tool, not
+an agent) — never an `Agent(...)` you spin up yourself. The Manager writes ZERO feature code and spawns ZERO build/verify
 agents; ad-hoc hand-coding and main-thread verify-agents are both unsanctioned.
 
 ## The unit of work is a FEATURE
