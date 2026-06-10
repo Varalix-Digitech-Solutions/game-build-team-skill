@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🎮 game-build-team
+# 👾<br/>🛠️
+
+# game-build-team
 
 ### A dynamic, agentic build pipeline for Godot 4 / GDScript game features
 
