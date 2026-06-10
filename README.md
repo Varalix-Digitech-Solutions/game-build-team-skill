@@ -20,6 +20,16 @@
 
 ---
 
+> [!IMPORTANT]
+> **Write a detailed requirement *before* you invoke the skill.** This pipeline *builds and verifies* — it doesn't guess scope. Its entire value is checking the work against a contract, so the quality of what you get out is capped by the spec you put in. A one-line ask ("make a shop") produces a one-line-quality feature.
+>
+> Spend ten minutes up front and hand it something real:
+> - **Think it through with an AI first.** Open Claude and use **extended thinking** (say *"ultrathink"* / "think hard") to pressure-test the idea — mechanics, edge cases, failure states, acceptance criteria — *before* a line of code. Or use a brainstorming/design tool you like. The goal is a written spec, not a vibe.
+> - **Capture it as the design contract** the team reads: the feature, how it should *feel*, concrete **acceptance criteria** ("placing on an occupied tile shows a red flash + error blip"), invariants it must not break, and any mockups.
+> - **Then invoke** `/game-build-team` and point it at that spec.
+>
+> No contract, nothing to verify against — see [Prerequisites](#-prerequisites).
+
 ## ⚡ Install
 
 This is a [Claude Code](https://docs.claude.com/en/docs/claude-code) skill. Clone it into your project's skills directory:
