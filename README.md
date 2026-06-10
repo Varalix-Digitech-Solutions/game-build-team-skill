@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛠️<sup>👾</sup>
+<img src="docs/media/banner.png" alt="game-build-team — a Build &amp; Break shop where a friendly robot and a pixel-invader fix, reboot and create" width="100%">
 
 # game-build-team
 
