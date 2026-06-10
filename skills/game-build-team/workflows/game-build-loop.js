@@ -139,6 +139,8 @@ const BRIEF_SCHEMA = {
     ready: { type: 'boolean', description: 'true if the brief is complete enough to build + judge fun from' },
     openQuestions: { type: 'array', items: { type: 'string' } },
     notes: { type: 'string' },
+    wrappedUp: { type: 'boolean', description: 'true if you stopped early due to a WRAP_UP/HARD_STOP sentinel' },
+    handoffPath: { type: 'string', description: 'path to the handoff report written when wrapping up' },
   },
 }
 
@@ -154,6 +156,8 @@ const BUILD_SCHEMA = {
     summary: { type: 'string' },
     devNotes: { type: 'string', description: 'honest notes: what was done, what is uncertain, what was inferred' },
     openQuestions: { type: 'array', items: { type: 'string' } },
+    wrappedUp: { type: 'boolean', description: 'true if you stopped early due to a WRAP_UP/HARD_STOP sentinel' },
+    handoffPath: { type: 'string', description: 'path to the handoff report written when wrapping up' },
   },
 }
 
@@ -185,6 +189,8 @@ const VERDICT_SCHEMA = {
       },
     },
     notes: { type: 'string' },
+    wrappedUp: { type: 'boolean', description: 'true if you stopped early due to a WRAP_UP/HARD_STOP sentinel' },
+    handoffPath: { type: 'string', description: 'path to the handoff report written when wrapping up' },
   },
 }
 
@@ -196,6 +202,8 @@ const DOC_SCHEMA = {
     featuresCovered: { type: 'array', items: { type: 'string' } },
     coverage: { type: 'string', enum: ['partial', 'substantial', 'complete'] },
     driftFlags: { type: 'array', items: { type: 'string' }, description: 'where the build contradicts a locked decision' },
+    wrappedUp: { type: 'boolean', description: 'true if you stopped early due to a WRAP_UP/HARD_STOP sentinel' },
+    handoffPath: { type: 'string', description: 'path to the handoff report written when wrapping up' },
   },
 }
 
@@ -205,13 +213,22 @@ const slug = (n) => (n || 'feature').replace(/[^a-z0-9-]/gi, '-').toLowerCase()
 const briefPathFor = (f) => `${featuresDir}/${slug(f.name)}.brief.md`
 const specPathFor = (f) => `${featuresDir}/${slug(f.name)}.spec.md`
 
+const sentinelDir = `${projectDir}/.game-build-team`
+
 const CONTEXT = `## Shared context
 - GOAL: ${goal}
 - PROJECT DIR: ${projectDir} (Godot 4 / GDScript, mobile, isometric)
 - DESIGN CONTRACT: ${designRefs} (read it FIRST; plus any mockup PNGs)
 - Feature docs dir: ${featuresDir}
 - Godot binary: ${godotBin}
-- Verify script (suite + screenshot): ${verifyScript || '(ask the Manager)'}${skillDir ? `\n- Skill dir: ${skillDir} (verify recipe in references/godot-verify-playbook.md; juice taxonomy in references/game-feel.md)` : ''}`
+- Verify script (suite + screenshot): ${verifyScript || '(ask the Manager)'}${skillDir ? `\n- Skill dir: ${skillDir} (verify recipe in references/godot-verify-playbook.md; juice taxonomy in references/game-feel.md)` : ''}
+
+## Usage wrap-up protocol (mandatory — the account's usage window may run out mid-run)
+A watchdog may write sentinel files when the usage window nears its cap. CHECK for them at the START of your task and again BETWEEN major steps — a free file-existence test, e.g. \`ls ${sentinelDir}/WRAP_UP ${sentinelDir}/HARD_STOP 2>/dev/null\`:
+- Sentinel present when you START → do NO work; return immediately with \`wrappedUp: true\` (fill required result fields honestly: empty lists, false flags, summary "wrapped up before starting").
+- \`HARD_STOP\` appears mid-task → STOP immediately, even mid-step. Write your handoff NOW with whatever you have, then return.
+- \`WRAP_UP\` appears mid-task → start NO new major step. Finish the current atomic step only if it is minutes from done, write your handoff, then return.
+HANDOFF = write \`${featuresDir}/<feature-slug>.handoff.md\` (for non-feature tasks use a task slug, e.g. \`final-regression\`): TARGET (what you were asked to do), DONE (what is complete, with file paths), REMAINING (what is not), NEXT STEP (the exact first action for whoever resumes), plus any open punch list. Flush ALL in-context findings into it — anything not on disk is lost at cutoff. Then set \`wrappedUp: true\` and \`handoffPath\` in your structured result.`
 
 // Helper: render an issue list (used in fix rounds, from either gate).
 const renderIssues = (issues) => (issues || []).map((i, n) => `${n + 1}. [${i.severity}] ${i.area}: ${i.description}\n   expected: ${i.expected}\n   actual: ${i.actual}${i.repro ? `\n   repro: ${i.repro}` : ''}`).join('\n')
@@ -227,14 +244,14 @@ You are NOT building. Read the design contract (${designRefs}) and the EXISTING 
 - GAME-FEEL / JUICE PLAN (the feedback budget: for each meaningful action + simulation event, the visual+audio+motion reaction the Animation Developer must build),
 - FUN ACCEPTANCE CRITERIA (observable, gate-able — what you will grade at the creative gate),
 - REUSE + FIT (existing systems/feel-language to match so it feels native).
-Write the brief to \`${briefPathFor(f)}\`. Flag anything that would clash with a locked decision as an open question. Return the structured result.`
+Write the brief to \`${briefPathFor(f)}\`. Flag anything that would clash with a locked decision as an open question. Return the structured result.${f.handoffPath ? `\nA prior run WRAPPED UP early on this feature — read the handoff at \`${f.handoffPath}\` FIRST and continue from its NEXT STEP; do not redo anything its DONE list covers.` : ''}`
 
 const logicPrompt = (f, brief, testVerdict, creativeVerdict, lastBuild) => `${LOGIC_PERSONA}
 
 ${CONTEXT}
 
 ## Task: BUILD the LOGIC of feature "${f.name}"${f.targetFiles?.length ? ` (target files: ${f.targetFiles.join(', ')})` : ''}
-Read the brief at \`${brief?.briefPath || briefPathFor(f)}\`${f.specPath ? ` and the spec at \`${f.specPath}\`` : ''} and build EXACTLY to them. REUSE the systems they list — grep before writing any new helper; extend, never duplicate. When you change behavior, DELETE the old path. Add/update the feature's tests under \`tests/unit/\` (\`extends SceneTree\`, run via \`godot --headless --script res://tests/...\`) with REAL assertions on the real call path. Make GDScript PARSE and the suite pass before reporting (\`bash ${verifyScript || '<verifyScript>'} --dir ${projectDir} --tests-only\`). Leave clean nodes/signals for the Animation Developer to hook feedback onto.
+${f.handoffPath ? `A prior run WRAPPED UP early on this feature — read the handoff at \`${f.handoffPath}\` FIRST and continue from its NEXT STEP; do not redo anything its DONE list covers.\n` : ''}Read the brief at \`${brief?.briefPath || briefPathFor(f)}\`${f.specPath ? ` and the spec at \`${f.specPath}\`` : ''} and build EXACTLY to them. REUSE the systems they list — grep before writing any new helper; extend, never duplicate. When you change behavior, DELETE the old path. Add/update the feature's tests under \`tests/unit/\` (\`extends SceneTree\`, run via \`godot --headless --script res://tests/...\`) with REAL assertions on the real call path. Make GDScript PARSE and the suite pass before reporting (\`bash ${verifyScript || '<verifyScript>'} --dir ${projectDir} --tests-only\`). Leave clean nodes/signals for the Animation Developer to hook feedback onto.
 **VISUAL DRIVER (so the gate sees the feature, not a boot frame):** also write \`tests/visual/drive_${slug(f.name)}.gd\` — an \`extends SceneTree\` that loads the main scene, drives THIS feature to its key interaction state from the brief (e.g. place a few objects / enter the relevant mode — reuse the same real input/API path the game uses, no shortcuts), awaits a handful of frames to settle, saves the framebuffer to \`OS.get_environment("GBT_SHOT_OUT")\` via \`get_root().get_texture().get_image().save_png(...)\`, then \`quit()\`. If on-device taps are meaningful, also write \`tests/visual/drive_${slug(f.name)}.adb.sh\` (a few \`adb shell input tap/swipe\` lines; \`$GBT_DEVICE\` is the serial). The verify script auto-loads these by slug — without them the gate only sees a resting frame.
 ${(testVerdict?.verdict === 'NG' || creativeVerdict?.verdict === 'NG') ? `\n## FIX round. Address EVERY issue below with full context of your last build:\n### Your previous notes\n${lastBuild?.devNotes || lastBuild?.summary || '(none)'}\n${testVerdict?.verdict === 'NG' ? `### TEST-GATE issues (correctness — yours to fix)\n${renderIssues(testVerdict.issues)}\n${testVerdict.suiteGreen === false ? 'The SUITE WAS RED — getting it green is priority #1.\n' : ''}` : ''}${creativeVerdict?.verdict === 'NG' ? `### CREATIVE-GATE issues (fun — fix any rooted in logic/structure; pure feel goes to the Animation Developer)\n${renderIssues(creativeVerdict.issues)}\n` : ''}` : ''}
 Return the structured build result with honest devNotes.`
@@ -300,18 +317,45 @@ Return OK only if the whole suite is green, the game boots, and the screen match
 
 log(`game-build-team loop starting: ${features.length} feature(s), tier=${cfg.modelTier || 'max-fidelity'}, maxRounds=${maxRounds}`)
 
+// --- Graceful drain ----------------------------------------------------------
+// Once any agent reports wrappedUp (usage-watchdog sentinel) or dies on a
+// terminal API error (agent() returns null after retries), the run DRAINS:
+// nothing new launches, in-flight features return status 'deferred', and the
+// result lists what to resume. State on disk stays accurate — done features
+// were durably marked by the gates; wrapped agents left handoff reports.
+let draining = false // false | 'usage-wrap-up' | 'api-failure'
+
+async function call(prompt, opts) {
+  if (draining) return null
+  const r = await agent(prompt, opts)
+  if (r === null) {
+    draining = draining || 'api-failure'
+    log(`DRAIN: agent ${opts?.label || '(unlabeled)'} returned null (terminal API error) — deferring all remaining work`)
+  } else if (r.wrappedUp) {
+    draining = draining || 'usage-wrap-up'
+    log(`DRAIN: agent ${opts?.label || '(unlabeled)'} wrapped up on a usage sentinel${r.handoffPath ? ` (handoff: ${r.handoffPath})` : ''} — deferring all remaining work`)
+  }
+  return r
+}
+
+const deferred = (feature, rounds, extra) => ({ feature: feature.name, status: 'deferred', reason: draining || 'wrap-up', rounds: rounds || 0, ...extra })
+
 // One build round: logic -> (animation) -> test gate -> (creative gate).
-// Returns { testVerdict, creativeVerdict, build }.
+// Returns { testVerdict, creativeVerdict, build } or { halted: true, ... } on drain.
 async function oneRound(feature, brief, round, prevTest, prevCreative, lastBuild) {
-  const build = await agent(logicPrompt(feature, brief, prevTest, prevCreative, lastBuild), { label: `logic:${feature.name}#${round}`, phase: 'Logic', schema: BUILD_SCHEMA, model: M.logic })
+  const build = await call(logicPrompt(feature, brief, prevTest, prevCreative, lastBuild), { label: `logic:${feature.name}#${round}`, phase: 'Logic', schema: BUILD_SCHEMA, model: M.logic })
+  if (!build || build.wrappedUp) return { halted: true, build }
   if (animationPass) {
-    await agent(animationPrompt(feature, brief, prevTest, prevCreative, build), { label: `animation:${feature.name}#${round}`, phase: 'Animation', schema: BUILD_SCHEMA, model: M.animation })
+    const anim = await call(animationPrompt(feature, brief, prevTest, prevCreative, build), { label: `animation:${feature.name}#${round}`, phase: 'Animation', schema: BUILD_SCHEMA, model: M.animation })
+    if (!anim || anim.wrappedUp) return { halted: true, build }
   }
   const isFinalGate = !creativeGate
-  const testVerdict = await agent(testPrompt(feature, brief, build, isFinalGate), { label: `test:${feature.name}#${round}`, phase: 'Test Gate', schema: VERDICT_SCHEMA, model: M.tester })
+  const testVerdict = await call(testPrompt(feature, brief, build, isFinalGate), { label: `test:${feature.name}#${round}`, phase: 'Test Gate', schema: VERDICT_SCHEMA, model: M.tester })
+  if (!testVerdict || testVerdict.wrappedUp) return { halted: true, build }
   if (testVerdict.verdict !== 'OK') return { testVerdict, creativeVerdict: null, build }
   if (!creativeGate) return { testVerdict, creativeVerdict: { verdict: 'OK', scope: 'creative gate disabled', issues: [] }, build }
-  const creativeVerdict = await agent(creativePrompt(feature, brief, build, testVerdict), { label: `creative:${feature.name}#${round}`, phase: 'Creative Gate', schema: VERDICT_SCHEMA, model: M.creative })
+  const creativeVerdict = await call(creativePrompt(feature, brief, build, testVerdict), { label: `creative:${feature.name}#${round}`, phase: 'Creative Gate', schema: VERDICT_SCHEMA, model: M.creative })
+  if (!creativeVerdict || creativeVerdict.wrappedUp) return { halted: true, build, testVerdict }
   return { testVerdict, creativeVerdict, build }
 }
 
@@ -320,12 +364,14 @@ async function buildAndVerify(feature) {
     log(`skip (already done): ${feature.name}`)
     return { feature: feature.name, status: 'done', rounds: 0, cached: true }
   }
+  if (draining) { log(`deferred (draining): ${feature.name}`); return deferred(feature) }
 
   // Brief (skip if the Manager / a prior run already wrote one). No global phase()
   // here — features run concurrently and would race the global phase state.
   let brief = feature.briefPath ? { briefPath: feature.briefPath, featureName: feature.name } : null
   if (!brief) {
-    brief = await agent(briefPrompt(feature), { label: `brief:${feature.name}`, phase: 'Brief', schema: BRIEF_SCHEMA, model: M.creative })
+    brief = await call(briefPrompt(feature), { label: `brief:${feature.name}`, phase: 'Brief', schema: BRIEF_SCHEMA, model: M.creative })
+    if (!brief || brief.wrappedUp) return deferred(feature, 0, { handoffPath: brief?.handoffPath })
   }
 
   let round = 0, testVerdict = null, creativeVerdict = null, lastBuild = null
@@ -333,7 +379,8 @@ async function buildAndVerify(feature) {
   // RESUME — status 'tested': correctness was verified in a prior run but the fun
   // gate never passed. Run the creative gate ONLY; fix-loop if it's NG.
   if (feature.status === 'tested' && creativeGate) {
-    creativeVerdict = await agent(creativePrompt(feature, brief, { summary: 'pre-tested build from a prior run — judging fun' }, null), { label: `creative-revalidate:${feature.name}`, phase: 'Creative Gate', schema: VERDICT_SCHEMA, model: M.creative })
+    creativeVerdict = await call(creativePrompt(feature, brief, { summary: 'pre-tested build from a prior run — judging fun' }, null), { label: `creative-revalidate:${feature.name}`, phase: 'Creative Gate', schema: VERDICT_SCHEMA, model: M.creative })
+    if (!creativeVerdict || creativeVerdict.wrappedUp) return deferred(feature, 0, { handoffPath: creativeVerdict?.handoffPath })
     if (creativeVerdict.verdict === 'OK') {
       log(`OK ${feature.name} (re-validated fun on a pre-tested build — 0 build rounds)`)
       return { feature: feature.name, status: 'pass', rounds: 0, brief, build: null, testVerdict: { verdict: 'OK', scope: 'pre-tested' }, creativeVerdict, revalidated: true }
@@ -344,10 +391,12 @@ async function buildAndVerify(feature) {
   // RESUME — status 'built': files exist but were never gated. Lead with the TEST
   // gate (don't burn a round rebuilding possibly-good code), then the creative gate.
   if (feature.status === 'built') {
-    testVerdict = await agent(testPrompt(feature, brief, { summary: 'pre-existing build from a prior run — re-validating', filesWritten: feature.targetFiles || [] }, !creativeGate), { label: `test-revalidate:${feature.name}`, phase: 'Test Gate', schema: VERDICT_SCHEMA, model: M.tester })
+    testVerdict = await call(testPrompt(feature, brief, { summary: 'pre-existing build from a prior run — re-validating', filesWritten: feature.targetFiles || [] }, !creativeGate), { label: `test-revalidate:${feature.name}`, phase: 'Test Gate', schema: VERDICT_SCHEMA, model: M.tester })
+    if (!testVerdict || testVerdict.wrappedUp) return deferred(feature, 0, { handoffPath: testVerdict?.handoffPath })
     if (testVerdict.verdict === 'OK') {
       if (!creativeGate) { log(`OK ${feature.name} (re-validated existing build — 0 build rounds)`); return { feature: feature.name, status: 'pass', rounds: 0, brief, build: null, testVerdict, revalidated: true } }
-      creativeVerdict = await agent(creativePrompt(feature, brief, { summary: 're-validated existing build' }, testVerdict), { label: `creative-revalidate:${feature.name}`, phase: 'Creative Gate', schema: VERDICT_SCHEMA, model: M.creative })
+      creativeVerdict = await call(creativePrompt(feature, brief, { summary: 're-validated existing build' }, testVerdict), { label: `creative-revalidate:${feature.name}`, phase: 'Creative Gate', schema: VERDICT_SCHEMA, model: M.creative })
+      if (!creativeVerdict || creativeVerdict.wrappedUp) return deferred(feature, 0, { handoffPath: creativeVerdict?.handoffPath })
       if (creativeVerdict.verdict === 'OK') { log(`OK ${feature.name} (re-validated existing build, both gates — 0 build rounds)`); return { feature: feature.name, status: 'pass', rounds: 0, brief, build: null, testVerdict, creativeVerdict, revalidated: true } }
     }
     log(`NG ${feature.name} re-validation — entering fix loop`)
@@ -357,6 +406,10 @@ async function buildAndVerify(feature) {
   while (round < maxRounds) {
     round++
     const r = await oneRound(feature, brief, round, testVerdict, creativeVerdict, lastBuild)
+    if (r.halted) {
+      log(`DEFERRED ${feature.name} (round ${round}): run draining (${draining || 'wrap-up'})`)
+      return deferred(feature, round, { brief, build: r.build || lastBuild, handoffPath: r.build?.handoffPath })
+    }
     lastBuild = r.build; testVerdict = r.testVerdict; creativeVerdict = r.creativeVerdict
     if (testVerdict.verdict === 'OK' && creativeVerdict && creativeVerdict.verdict === 'OK') {
       log(`OK ${feature.name} (round ${round}) — both gates passed`)
@@ -377,6 +430,12 @@ async function buildInWaves(items) {
   const out = []
   const total = Math.ceil(items.length / waveSize)
   for (let w = 0; w * waveSize < items.length; w++) {
+    if (draining) {
+      const rest = items.slice(w * waveSize)
+      log(`draining (${draining}) — deferring the remaining ${rest.length} feature(s) without launching: ${rest.map(s => s.name).join(', ')}`)
+      out.push(...rest.map(f => deferred(f)))
+      break
+    }
     const chunk = items.slice(w * waveSize, w * waveSize + waveSize)
     if (waveSize < items.length) log(`wave ${w + 1}/${total}: ${chunk.map(s => s.name).join(', ')}`)
     const res = await pipeline(chunk, (feature) => buildAndVerify(feature))
@@ -387,30 +446,36 @@ async function buildInWaves(items) {
 
 const runDocs = () => docsDepth === 'none'
   ? Promise.resolve(null)
-  : agent(docsPrompt(), { label: 'domain-architect', phase: 'Docs', schema: DOC_SCHEMA, model: M.docs })
+  : call(docsPrompt(), { label: 'domain-architect', phase: 'Docs', schema: DOC_SCHEMA, model: M.docs })
 
 const [featureResults, docsResult] = await Promise.all([buildInWaves(features), runDocs()])
 
 const passed = featureResults.filter(r => r && (r.status === 'pass' || r.status === 'done'))
 const flagged = featureResults.filter(r => r && r.status === 'flagged')
-log(`features complete: ${passed.length} passed, ${flagged.length} flagged`)
+const deferredResults = featureResults.filter(r => r && r.status === 'deferred')
+log(`features complete: ${passed.length} passed, ${flagged.length} flagged, ${deferredResults.length} deferred`)
 
 // Final full-suite regression — only when at least one feature passed AND nothing
-// is still flagged. Verifying with zero passed features is never a valid "done".
+// is still flagged or deferred. Verifying with zero passed features is never a valid "done".
 let finalVerdict = null, finalRound = 0
-if (skipFinal) {
+if (draining) {
+  log(`Final regression skipped — run is draining (${draining}). Resume after the window resets.`)
+} else if (skipFinal) {
   log(`Final regression skipped (skipFinal): ${passed.length} passed, ${flagged.length} flagged. Manager runs it in Phase 3.`)
-} else if (passed.length > 0 && flagged.length === 0) {
+} else if (passed.length > 0 && flagged.length === 0 && deferredResults.length === 0) {
   while (finalRound < finalCap) {
     finalRound++
-    finalVerdict = await agent(finalPrompt(featureResults, finalVerdict, finalRound), { label: `final-regression#${finalRound}`, phase: 'Final Regression', schema: VERDICT_SCHEMA, model: M.tester })
+    finalVerdict = await call(finalPrompt(featureResults, finalVerdict, finalRound), { label: `final-regression#${finalRound}`, phase: 'Final Regression', schema: VERDICT_SCHEMA, model: M.tester })
+    if (!finalVerdict || finalVerdict.wrappedUp) { finalVerdict = null; log(`Final regression deferred — run draining (${draining})`); break }
     if (finalVerdict.verdict === 'OK') { log('FINAL REGRESSION: OK'); break }
     log(`FINAL REGRESSION round ${finalRound}: NG (${(finalVerdict.issues || []).length} issue(s))`)
     if (finalRound < finalCap) {
-      await agent(`${LOGIC_PERSONA}\n\n${CONTEXT}\n\n## Task: FIX the cross-feature regression failures below, then make the full suite green again. Delete dead paths; do not duplicate.\n${renderIssues(finalVerdict.issues)}`,
+      await call(`${LOGIC_PERSONA}\n\n${CONTEXT}\n\n## Task: FIX the cross-feature regression failures below, then make the full suite green again. Delete dead paths; do not duplicate.\n${renderIssues(finalVerdict.issues)}`,
         { label: `final-fix#${finalRound}`, phase: 'Final Regression', schema: BUILD_SCHEMA, model: M.logic })
     }
   }
+} else if (deferredResults.length > 0) {
+  log(`Skipping final regression — ${deferredResults.length} deferred feature(s) still need a resumed run: ${deferredResults.map(f => f.feature).join(', ')}.`)
 } else if (passed.length === 0) {
   log('Skipping final regression — ZERO features passed the gates. Nothing shippable (check build logs).')
 } else {
@@ -422,6 +487,8 @@ return {
     features: featureResults.length,
     passed: passed.length,
     flagged: flagged.map(f => f.feature),
+    deferred: deferredResults.map(f => f.feature),
+    drained: draining || false,
     finalVerdict: finalVerdict?.verdict || 'not-run',
     docsCoverage: docsResult?.coverage || (docsDepth === 'none' ? 'skipped' : 'unknown'),
     driftFlags: docsResult?.driftFlags || [],

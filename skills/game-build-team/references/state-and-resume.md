@@ -2,7 +2,43 @@
 
 The user can stop and come back any time — including after a usage-limit cutoff in
 a *different* session. Durability rests on `.game-build-team/state.json` plus the
-Tester writing a `done` marker the moment a feature passes.
+Tester writing a `done` marker the moment a feature passes — and, for the cutoff
+case, the **usage watchdog** below, which winds the team down *gracefully before*
+the limit hits instead of letting agents die mid-thought.
+
+## Usage watchdog — warm stop / hard stop (graceful wrap-up before a cutoff)
+
+`scripts/usage-watchdog.mjs` polls the account's **5-hour usage window** (the same
+endpoint the `/usage` screen reads — zero tokens, pure node) and writes sentinel
+files into `.game-build-team/` at two thresholds:
+
+| Sentinel | Default | Meaning for agents |
+|---|---|---|
+| `WRAP_UP` | ≥ 80% | **Warm stop.** Start no new major step; finish the current atomic step only if minutes from done; write a handoff report; return early. |
+| `HARD_STOP` | ≥ 93% | **Hard stop.** Stop immediately, even mid-step; flush the handoff as-is; return. |
+
+The Manager launches it in the background at the top of Phase 3:
+
+```bash
+node "$SKILL_DIR/scripts/usage-watchdog.mjs" start --dir <proj>   # run_in_background
+node "$SKILL_DIR/scripts/usage-watchdog.mjs" check --dir <proj>   # one-shot poll
+node "$SKILL_DIR/scripts/usage-watchdog.mjs" clear --dir <proj>   # remove sentinels
+```
+
+How the signal reaches the team (running agents can only be reached pull-based):
+every agent prompt carries a **wrap-up protocol** — check for the sentinels at task
+start and between major steps (a free file-existence test). On wrap-up the agent
+writes `docs/features/<slug>.handoff.md` (TARGET / DONE / REMAINING / NEXT STEP /
+punch list), flushing all in-context findings to disk, and returns with
+`wrappedUp: true`. The Workflow then **drains**: nothing new launches, in-flight
+features return `status: 'deferred'`, and the run ends cleanly with state.json
+accurate. The same drain triggers if an agent dies on a terminal API error
+(`agent()` returns `null`), so an API outage stops burning tokens too.
+
+A failed poll is logged and ignored (never treated as 0%); when utilization drops
+below the warm threshold (new window) the watchdog clears the sentinels. The
+sentinel files contain the utilization and `resets_at` timestamp, so the Manager —
+or a cron — knows exactly when to relaunch.
 
 ## state.json schema (managed via scripts/state.mjs — don't hand-edit)
 
@@ -64,7 +100,9 @@ features.
      (not Manager discretion): fills `specPath` from disk (don't re-spec), marks
      on-disk-but-unverified features `built` (Tester re-validates, not a blind
      rebuild), demotes `done`-without-file to `pending`, rebases a stale
-     `projectDir`.
+     `projectDir`, clears stale usage sentinels (`WRAP_UP`/`HARD_STOP`), and
+     attaches `handoffPath` for features a prior run wrapped up mid-task (the
+     resumed agent continues from the handoff's NEXT STEP, not from scratch).
   2. Relaunch:
      - **same session** (after a pause/edit): Workflow with
        `resumeFromRunId: <lastRunId>` — unchanged `agent()` calls return cached
