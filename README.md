@@ -1,6 +1,6 @@
 <div align="center">
 
-# 👾<br/>🛠️
+# 🛠️<sup>👾</sup>
 
 # game-build-team
 
