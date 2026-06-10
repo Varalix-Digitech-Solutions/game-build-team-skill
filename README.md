@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/media/banner.png" alt="game-build-team — a Build &amp; Break shop where a friendly robot and a pixel-invader fix, reboot and create" width="100%">
+<img src="docs/media/banner.webp" alt="game-build-team — a Build &amp; Break shop where a friendly robot and a pixel-invader fix, reboot and create" width="100%">
 
 # game-build-team
 
