@@ -158,8 +158,13 @@ and captures a real frame), never by trusting a developer's report.
 
 ## Preflight (once per project)
 
+`SKILL_DIR` is **this skill's own directory** — when installed as a plugin it lives in a
+Claude Code plugins dir *away from* the game project, so never assume `$(pwd)`. Set it to
+the absolute path of the directory this `SKILL.md` was loaded from, and aim everything at
+the game project with `--dir "$(pwd)"`.
+
 ```bash
-SKILL_DIR="$(pwd)/.claude/skills/game-build-team"   # adjust if invoked elsewhere
+SKILL_DIR="<the absolute dir this SKILL.md lives in>"   # plugin dir, or <project>/.claude/skills/game-build-team
 godot --version                                     # godot 4.x on PATH
 # REQUIRED, gating: install ALL companion skills from source, project-local. If this
 # exits non-zero, the companion skills are not all present — STOP and fix; do NOT run
@@ -211,7 +216,8 @@ reportPath, skillDir } } }`.
 > workflows — a skill's own `workflows/*.js` are not in that registry, so a `name:`
 > launch fails with *"Workflow … not found. Available: …"*. The `meta.name` inside the
 > script (e.g. `game-build-team-recon`) is just an internal label, not a registration.
-> `<skillDir>` = the absolute path you set in preflight (`$(pwd)/.claude/skills/game-build-team`).
+> `<skillDir>` = `SKILL_DIR`, the absolute path you set in preflight (this skill's own
+> directory — a plugin dir, or `<project>/.claude/skills/game-build-team`).
 
 Then **act on the report — this is a hard gate**:
 - **`blockers` non-empty** → tell the user plainly: *"Install these first: `<item>` —

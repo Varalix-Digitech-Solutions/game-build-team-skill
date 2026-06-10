@@ -22,12 +22,29 @@
 
 This is a [Claude Code](https://docs.claude.com/en/docs/claude-code) skill. Clone it into your project's skills directory:
 
-```bash
-git clone https://github.com/Varalix-Digitech-Solutions/game-build-team-skill \
-  <your-godot-project>/.claude/skills/game-build-team
+**Recommended — install as a plugin** (one marketplace, one install, **auto-updates**). In Claude Code:
+
+```
+/plugin marketplace add Varalix-Digitech-Solutions/game-build-team-skill
+/plugin install game-build-team@game-build-team
 ```
 
-That's it. On first invoke, the skill's **preflight installs everything else it needs** (see [Dependencies](#dependencies)) into your project — **project-local, never global**.
+That's it — the `game-build-team` skill and the `/game-build-update` command register automatically. Plugin installs **auto-update** when a new version ships, and Claude Code surfaces an update prompt right below the chat box — no re-cloning. Run `/game-build-update` anytime to see what you're on vs. the latest. (Restart Claude Code if it doesn't show up immediately.)
+
+On first invoke, the skill's **preflight installs everything else it needs** (see [Dependencies](#dependencies)) into your project — **project-local, never global**.
+
+<details>
+<summary><b>Alternative — manual install (no plugins)</b></summary>
+
+```bash
+git clone https://github.com/Varalix-Digitech-Solutions/game-build-team-skill.git
+cp -r game-build-team-skill/skills/game-build-team <your-godot-project>/.claude/skills/game-build-team
+# optional: the update command
+cp game-build-team-skill/commands/game-build-update.md ~/.claude/commands/
+```
+
+A manual copy does **not** auto-update — run `/game-build-update` to check, or re-copy from the latest clone.
+</details>
 
 ### ✅ Prerequisites
 
@@ -100,7 +117,7 @@ The step order is fixed, but how many features build in parallel is **sized to y
 On invoke, preflight installs **48 companion Godot skills** ([GodotPrompter](https://github.com/jame581/GodotPrompter), MIT) from the repo's pinned `vendor/` into your project's `.claude/skills/` — **project-local, never global** — and **refuses to run until every one is present**:
 
 ```bash
-bash scripts/install-deps.sh --dir /abs/path/to/your/godot-project   # run by preflight; exits non-zero if any dep is missing
+bash skills/game-build-team/scripts/install-deps.sh --dir /abs/path/to/your/godot-project   # run by preflight; exits non-zero if any dep is missing
 ```
 
 These companion skills are **required, not optional** — they're how each agent reaches full Godot domain depth.
@@ -112,13 +129,16 @@ These companion skills are **required, not optional** — they're how each agent
 ## 🗂️ Layout
 
 ```
-SKILL.md                 the Manager's operating manual (the entry point)
-agents/                  the six spawn personas (single source of truth)
-workflows/               recon.js (Phase 1) + game-build-loop.js (Phase 3, the two-gate loop)
-references/              orchestration, skill map, verify playbook, game-feel, resume
-scripts/                 durable state, dynamic capacity probe, verify gate, installer
-vendor/godot-prompter/   vendored GodotPrompter skills (MIT)
-evals/                   behavioral evals for the skill
+.claude-plugin/          plugin + marketplace manifests (what makes it a one-command install)
+commands/                /game-build-update — version-aware updater
+skills/game-build-team/   the skill itself:
+  SKILL.md                 the Manager's operating manual (the entry point)
+  agents/                  the six spawn personas (single source of truth)
+  workflows/               recon.js (Phase 1) + game-build-loop.js (Phase 3, the two-gate loop)
+  references/              orchestration, skill map, verify playbook, game-feel, resume
+  scripts/                 durable state, dynamic capacity probe, verify gate, installer
+  vendor/godot-prompter/   vendored GodotPrompter skills (MIT)
+  evals/                   behavioral evals for the skill
 ```
 
 ---
