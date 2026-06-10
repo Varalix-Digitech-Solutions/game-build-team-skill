@@ -121,14 +121,17 @@ and the project invariants you extracted.
 **Capabilities overlap on purpose.** Two baselines are shared across the team rather
 than siloed in one role: **see-UI** (`godot-ui`, `responsive-ui`, the verify
 playbook) is loaded by *every* agent that touches or inspects the running game, and
-**code-quality** (`godot-testing`, `godot-debugging`, `godot-code-review`) is loaded
-by every agent that writes, breaks, or judges code. **You (the Manager) load both
-baselines too** — plus `mobile-development` / `export-pipeline` for the target —
+**code-quality** (`godot-testing`, `godot-debugging`, `godot-code-review`, plus
+`karpathy-guidelines` — the LLM-pitfall discipline layer, applied as adapted by the
+harmony mends in `references/skills-loadout.md`) is loaded by every agent that
+writes, breaks, or judges code. **You (the Manager) load both baselines too** —
+plus `mobile-development` / `export-pipeline` for the target —
 because Phase 4 is your own round of testing + verification — a holistic, real-hardware
-pass over the whole delivery. (The in-Workflow Tester CAN now build+deploy fresh to the
-device itself via `--deploy`; your Phase 4 is the cross-feature confirmation on top of
-its per-feature checks, not a capability it lacks.) You load these to *judge*, never to
-write code.
+pass over the whole delivery. (The in-Workflow Tester runs a **rapid** gate by
+default — suite + fresh source-render simulation; it CAN `--deploy` for inherently
+device-specific features, so it lacks no capability. Your Phase 4 is **the**
+thorough on-device pass — fresh deploy, real hardware, cross-feature.) You load
+these to *judge*, never to write code.
 
 ## Why this stops the half-assing
 
@@ -260,8 +263,11 @@ host; a single feature is one item):
    parse + the suite green.
 3. **Juice pass** — the Animation Developer edits the SAME files, adding only the
    feel/feedback from the brief (never touching logic), keeping the suite green.
-4. **Test gate** — the Tester runs `godot_verify.sh`: suite green + acceptance
+4. **Test gate (rapid)** — the Tester runs `godot_verify.sh`: suite green + acceptance
    criteria asserted + screenshot vs contract + invariants. OK or NG-with-issues.
+   **Rapid by default**: the visual check is the fresh source-render simulation
+   (seconds), not an APK deploy; `--deploy` is reserved for inherently
+   device-specific features — the thorough on-device pass is your Phase 4.
 5. **Creative gate** — once correctness is OK, the Creative Director judges the
    running feature against the brief (readable/responsive/satisfying/on-theme/fair).
    OK or NG-with-issues.
@@ -288,8 +294,9 @@ gate — that is what makes the run resumable.
 
 When the loop reports all features OK (or you ran with `skipFinal`). This is **your own
 hands using `Bash`/`Read`** — exactly like clone-team's Manager drives `agent-browser`
-himself. **Do NOT spawn an agent for this** (the per-feature on-device verify was already
-the Workflow Tester's job via `--deploy`):
+himself. **Do NOT spawn an agent for this.** With the rapid in-loop gate, this phase
+is **the** thorough on-device pass of the run (the Workflow Tester deployed only for
+device-specific features), so don't skim it:
 
 1. **Your own final regression.** Run the COMPLETE suite yourself (`Bash`:
    `godot_verify.sh`), and on the device do the *cross-feature* check the per-feature

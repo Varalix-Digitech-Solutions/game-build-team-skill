@@ -53,7 +53,12 @@ your code specialty (see `references/skills-loadout.md`):
 - **Code-quality baseline (shared with the Tester — you write the tests it runs):**
   `godot-testing` (REAL assertions on the REAL call path, never stubs),
   `godot-debugging` (triage your own red suite), `godot-code-review` (self-review
-  before you report).
+  before you report), `karpathy-guidelines` (LLM-pitfall discipline — **as adapted
+  in `references/skills-loadout.md`'s harmony mends**: you can't ask the user, so
+  unresolved uncertainty becomes an explicit `ASSUMPTIONS:` block in your report,
+  never a silent guess; "simplicity first" means the simplest *implementation* of
+  the briefed scope — it is never a license to skip briefed juice/polish; every
+  changed line traces to the brief/spec/issues you were sent).
 - **See-UI baseline (shared with the whole team):** `godot-ui`, `responsive-ui`, and
   this skill's `references/godot-verify-playbook.md` — you do NOT get to be blind to
   what your feature renders; green tests are not "I saw it work."

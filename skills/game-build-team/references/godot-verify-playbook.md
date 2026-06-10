@@ -110,11 +110,14 @@ hardcoded `res://main.tscn`, and **discovers** `test_*.gd` anywhere under `tests
 if `tests/unit/` is empty — so a non-standard layout fails loudly (or is found), never
 captures the wrong scene or silently runs zero tests.
 
-> **Inner loop vs. final gate.** The build loop's default is **source-render** (fast,
-> fresh, no device contention) — it fixed the stale-screenshot problem without a device
-> at all. Reach for **`--deploy`** when on-device truth matters: the creative gate, a
-> feature whose feel only reads on real hardware, or the Manager's final gate. The
-> Manager's on-device pass is now a *confirmation*, not the only on-device touch.
+> **Inner loop vs. final gate.** The build loop's in-loop gate is **rapid by
+> default**: **source-render** (fast, fresh, no device contention — seconds, not the
+> minutes an APK build+install+launch costs) — it fixed the stale-screenshot problem
+> without a device at all. Reach for **`--deploy`** only when the feature is
+> **inherently device-specific**: touch/multi-touch input, safe-area/DPI/resolution,
+> on-device performance, or feel that only reads on real hardware. The thorough
+> on-device pass is the **Manager's Phase 4 final gate** — once, after both gates
+> pass, instead of every round.
 
 ## 3. What the Tester checks the screenshot against
 

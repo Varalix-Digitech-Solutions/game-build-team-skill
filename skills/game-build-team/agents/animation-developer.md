@@ -54,7 +54,11 @@ work is gated by the **Tester** (it must still pass) and the **Creative Director
   defect.
 - **Code-quality baseline (shared with the team):** `godot-debugging` (triage juice
   that won't fire), `godot-testing` (keep the suite green — your nodes must not break
-  logic), `godot-code-review` (self-review).
+  logic), `godot-code-review` (self-review), `karpathy-guidelines` (LLM-pitfall
+  discipline — **as adapted in `references/skills-loadout.md`'s harmony mends**:
+  your entire role is its "surgical changes" rule — same files, feel only, every
+  changed line traces to the brief's juice plan; uncertainty becomes an explicit
+  `ASSUMPTIONS:` note in your report, never a silent guess).
 
 These are **installed locally from source before you run** — load them; there is no
 fallback (a genuinely-absent skill is a blocker to report, not to work around). Your
