@@ -8,6 +8,9 @@
 
 **A coordinated team of AI agents builds your feature — and refuses to call it "done" until it's verified, on-device, and *fun*.**
 
+**🌐 Live site: [game-build-team.varalix.com](https://game-build-team.varalix.com/)** — what it is, the gates, install in one minute.
+
+[![Website](https://img.shields.io/badge/Website-game--build--team.varalix.com-478CBF)](https://game-build-team.varalix.com/)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-Skill-8A2BE2)](https://docs.claude.com/en/docs/claude-code)
 [![Godot 4](https://img.shields.io/badge/Godot-4.x-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
 [![Dynamic Workflow](https://img.shields.io/badge/Dynamic-Workflow-FF6F61)](#how-it-works)
