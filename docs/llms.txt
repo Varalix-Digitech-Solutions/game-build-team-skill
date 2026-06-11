@@ -1,0 +1,38 @@
+# game-build-team
+
+> A Claude Code skill that orchestrates a team of AI agents (Manager, Recon Analyst,
+> Creative Director, Logic Developer, Animation Developer, Tester) to build Godot 4 /
+> GDScript game features behind two unskippable gates — a rapid headless test gate and
+> an "is it fun" creative gate — capped by the Manager's thorough on-device final pass.
+> Built on the dynamic Workflow engine. Pausable/resumable across sessions and
+> usage-limit cutoffs.
+
+## Install (in Claude Code)
+/plugin marketplace add Varalix-Digitech-Solutions/game-build-team-skill
+/plugin install game-build-team@game-build-team
+
+## Use
+Write a real spec first (acceptance criteria, feel, invariants), then ask Claude Code:
+"/game-build-team build the tower-upgrade feature against docs/design/tower-upgrade.md"
+
+## What you get
+- The feature built as a vertical slice: gameplay logic + game-feel/juice pass + real tests
+- Verified: headless suite green, acceptance criteria asserted on the real call path, fresh screenshot vs the design contract, project invariants intact
+- Judged fun: readable / responsive / satisfying / on-theme / fair, against the feature's own brief
+- Proven on-device: the Manager builds, installs, and launches the fresh APK on real hardware at the end
+
+## Key properties
+- Two unskippable gates: the build/test loop is a deterministic Workflow program; "done" is a loop condition in code
+- Rapid iteration: in-loop testing runs on a fast source-render simulation (seconds per round); the on-device pass happens once at the end
+- Pausable and resumable across sessions and usage-limit cutoffs (durable state.json + usage watchdog with graceful wrap-up)
+- Scales to your machine: parallel builders sized to host free memory
+- 49 companion skills installed project-local (GodotPrompter Godot domain skills + Karpathy LLM coding-discipline guidelines), no fallback — a missing skill stops the run loudly
+
+## Requirements
+Claude Code, Godot 4.x on PATH, Node.js. For on-device verification: adb + an Android device (tests still gate without one).
+
+## Links
+- Repository: https://github.com/Varalix-Digitech-Solutions/game-build-team-skill
+- Website: https://game-build-team.varalix.com/
+- Sister skill (front-end cloning): https://clone-team.varalix.com/
+- License: MIT

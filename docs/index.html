@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>game-build-team — Build Godot game features with a team of AI agents | Claude Code skill</title>
+<meta name="description" content="game-build-team is a Claude Code skill that builds Godot 4 / GDScript game features with a coordinated team of AI agents — and refuses to call a feature done until it passes two unskippable gates: a headless test gate and an 'is it fun' creative gate, capped by a real on-device pass. The AI way to build game features that are verified AND fun." />
+<meta name="author" content="Varalix Digitech Solutions" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="keywords" content="build godot game with AI, godot AI agents, claude code godot skill, AI game development, gdscript AI, AI game feature builder, godot 4 automation, multi-agent game dev, game feel juice AI, godot testing automation, claude code skill, AI builds game features" />
+<link rel="canonical" href="https://game-build-team.varalix.com/" />
+
+<!-- Open Graph / social -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="game-build-team — Build Godot game features with a team of AI agents" />
+<meta property="og:description" content="A coordinated AI team builds your Godot feature behind two unskippable gates — tested AND fun — then verifies it on a real device. A Claude Code skill on the dynamic Workflow engine." />
+<meta property="og:url" content="https://game-build-team.varalix.com/" />
+<meta property="og:image" content="https://game-build-team.varalix.com/media/banner.webp" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="game-build-team — Build Godot game features with a team of AI agents" />
+<meta name="twitter:description" content="Two unskippable gates: a headless test gate and an 'is it fun' gate. A Claude Code skill for Godot 4 / GDScript." />
+<meta name="twitter:image" content="https://game-build-team.varalix.com/media/banner.webp" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%BE%3C/text%3E%3C/svg%3E" />
+
+<!-- Machine-readable for AI agents / scrapers: what it is + how to install -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "game-build-team",
+  "alternateName": "game-build-team — Claude Code skill",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Claude Code (macOS, Linux, Windows)",
+  "description": "A Claude Code skill that orchestrates a team of AI agents (Manager, Recon Analyst, Creative Director, Logic Developer, Animation Developer, Tester) to build Godot 4 / GDScript game features behind two unskippable gates — a rapid headless test gate and an 'is it fun' creative gate — capped by the Manager's thorough on-device final pass. Built on the dynamic Workflow engine. Pausable and resumable across sessions and usage-limit cutoffs.",
+  "url": "https://game-build-team.varalix.com/",
+  "downloadUrl": "https://github.com/Varalix-Digitech-Solutions/game-build-team-skill",
+  "codeRepository": "https://github.com/Varalix-Digitech-Solutions/game-build-team-skill",
+  "installUrl": "https://github.com/Varalix-Digitech-Solutions/game-build-team-skill#-install",
+  "softwareVersion": "1.1.0",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Organization", "name": "Varalix Digitech Solutions", "url": "https://github.com/Varalix-Digitech-Solutions" },
+  "keywords": "godot, gdscript, game development, Claude Code skill, AI agents, multi-agent, game feel, testing, dynamic workflow",
+  "softwareHelp": "https://github.com/Varalix-Digitech-Solutions/game-build-team-skill#readme"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Install game-build-team in Claude Code",
+  "description": "Install the game-build-team skill as a Claude Code plugin, then ask Claude to build a Godot feature against your spec.",
+  "totalTime": "PT1M",
+  "step": [
+    { "@type": "HowToStep", "position": 1, "name": "Add the marketplace", "text": "/plugin marketplace add Varalix-Digitech-Solutions/game-build-team-skill" },
+    { "@type": "HowToStep", "position": 2, "name": "Install the plugin", "text": "/plugin install game-build-team@game-build-team" },
+    { "@type": "HowToStep", "position": 3, "name": "Use it", "text": "Write a real spec for your feature (acceptance criteria, feel, invariants), then ask Claude Code: /game-build-team build the tower-upgrade feature against docs/design/tower-upgrade.md" }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-soft: #111114;
+    --panel: #16161b;
+    --border: #26262e;
+    --border-soft: #1d1d24;
+    --ink: #f4f4f6;
+    --ink-dim: #b4b4c0;
+    --ink-faint: #82828f;
+    --orange: #d97757;
+    --orange-soft: #e89070;
+    --blue: #478cbf;
+    --blue-soft: #6aa9d8;
+    --purple: #8b5cf6;
+    --green: #34d399;
+
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+    --maxw: 1080px;
+    --radius: 14px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  .glow {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(60% 50% at 50% -10%, rgba(71, 140, 191, 0.16), transparent 70%),
+      radial-gradient(50% 40% at 85% 10%, rgba(217, 119, 87, 0.12), transparent 70%);
+    pointer-events: none;
+  }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(12px);
+    background: rgba(10, 10, 12, 0.7);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .brand { font-weight: 700; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+  .navlinks { display: flex; gap: 22px; font-size: 14px; color: var(--ink-dim); }
+  .navlinks a:hover { color: var(--ink); }
+  .nav-gh {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13.5px;
+    transition: border-color .2s var(--ease-out), background .2s;
+  }
+  .nav-gh:hover { border-color: var(--blue); background: rgba(71, 140, 191, .08); }
+  @media (max-width: 720px) { .navlinks a:not(.nav-gh) { display: none; } }
+
+  header.hero { padding: 84px 0 30px; text-align: center; }
+  .hero h1 {
+    font-size: clamp(34px, 6vw, 58px);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+  .grad {
+    background: linear-gradient(92deg, var(--blue-soft), var(--orange-soft));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero .sub {
+    margin: 22px auto 0;
+    max-width: 720px;
+    color: var(--ink-dim);
+    font-size: clamp(16px, 2.2vw, 19px);
+  }
+  .hero .sub strong { color: var(--ink); }
+
+  .install-box {
+    margin: 34px auto 0;
+    max-width: 640px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-align: left;
+    overflow: hidden;
+  }
+  .install-box .bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--ink-faint); font-size: 12.5px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+  .dot.g { background: var(--green); }
+  .install-box pre {
+    padding: 18px 20px;
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.9;
+    overflow-x: auto;
+    color: var(--ink);
+  }
+  .install-box .c { color: var(--ink-faint); }
+
+  .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
+  .btn {
+    display: inline-block;
+    padding: 12px 26px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    transition: transform .2s var(--ease-out), box-shadow .2s, background .2s, border-color .2s;
+  }
+  .btn-primary { background: var(--orange); color: #fff; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(217, 119, 87, .3); }
+  .btn-ghost { border: 1px solid var(--border); color: var(--ink-dim); }
+  .btn-ghost:hover { border-color: var(--blue); color: var(--ink); }
+
+  .banner-frame { margin: 56px auto 0; max-width: 920px; }
+  .banner-frame img {
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    display: block;
+  }
+
+  section { padding: 88px 0 0; }
+  .kicker {
+    color: var(--blue-soft);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  section h2 {
+    margin-top: 10px;
+    font-size: clamp(26px, 4vw, 38px);
+    letter-spacing: -0.015em;
+    line-height: 1.18;
+  }
+  .lead { margin-top: 14px; max-width: 720px; color: var(--ink-dim); font-size: 16.5px; }
+
+  .grid { display: grid; gap: 18px; margin-top: 36px; }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 860px) { .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .card .emoji { font-size: 26px; }
+  .card h3 { margin-top: 10px; font-size: 18px; }
+  .card p { margin-top: 8px; color: var(--ink-dim); font-size: 14.5px; }
+  .card .tag {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 2px 8px;
+  }
+
+  .gate { border-left: 3px solid var(--green); }
+  .gate.fun { border-left-color: var(--purple); }
+  .gate.device { border-left-color: var(--orange); }
+
+  .pipeline {
+    margin-top: 36px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    font-family: var(--mono);
+    font-size: clamp(12px, 1.8vw, 14.5px);
+    color: var(--ink-dim);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .pipeline b { color: var(--green); font-weight: 600; }
+  .pipeline i { color: var(--purple); font-style: normal; font-weight: 600; }
+
+  .spec-note {
+    margin-top: 36px;
+    border: 1px solid rgba(217, 119, 87, .4);
+    background: rgba(217, 119, 87, .06);
+    border-radius: var(--radius);
+    padding: 24px 26px;
+  }
+  .spec-note h3 { font-size: 17px; }
+  .spec-note p { margin-top: 8px; color: var(--ink-dim); font-size: 14.5px; }
+
+  ul.checks { margin-top: 22px; list-style: none; }
+  ul.checks li {
+    padding-left: 30px;
+    position: relative;
+    margin-top: 12px;
+    color: var(--ink-dim);
+    font-size: 15px;
+  }
+  ul.checks li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  ul.checks li strong { color: var(--ink); }
+
+  footer {
+    margin-top: 100px;
+    border-top: 1px solid var(--border-soft);
+    padding: 36px 0 48px;
+    color: var(--ink-faint);
+    font-size: 14px;
+  }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  footer a { color: var(--ink-dim); }
+  footer a:hover { color: var(--ink); }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease-out), transform .7s var(--ease-out); }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">🛠️<span style="margin-left:-6px">👾</span> game-build-team</a>
+    <div class="navlinks">
+      <a href="#team">The team</a>
+      <a href="#gates">The gates</a>
+      <a href="#engine">The engine</a>
+      <a href="#install">Install</a>
+      <a class="nav-gh" href="https://github.com/Varalix-Digitech-Solutions/game-build-team-skill">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <h1 class="reveal">Build Godot game features with a<br /><span class="grad">team of AI agents.</span></h1>
+    <p class="sub reveal">A <strong>Claude Code skill</strong> that designs, builds, juices, and tests Godot&nbsp;4 / GDScript features — and <strong>refuses to call anything "done"</strong> until it passes two unskippable gates: <strong>tested</strong> and <strong>fun</strong>. Then it proves it on a real device.</p>
+
+    <div class="install-box reveal" id="install-hero">
+      <div class="bar"><span class="dot g"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:6px">Claude Code</span></div>
+      <pre><span class="c"># one-time install (auto-updates)</span>
+/plugin marketplace add Varalix-Digitech-Solutions/game-build-team-skill
+/plugin install game-build-team@game-build-team
+
+<span class="c"># then point it at a real spec</span>
+/game-build-team build the tower-upgrade feature against docs/design/tower-upgrade.md</pre>
+    </div>
+
+    <div class="cta-row reveal">
+      <a class="btn btn-primary" href="https://github.com/Varalix-Digitech-Solutions/game-build-team-skill">Get the skill ↗</a>
+      <a class="btn btn-ghost" href="#gates">Why it can't half-ass</a>
+    </div>
+
+    <div class="banner-frame reveal">
+      <img src="media/banner.webp" alt="game-build-team — a Build &amp; Break shop where a friendly robot and a pixel-invader fix, reboot and create" loading="lazy" />
+    </div>
+  </div>
+</header>
+
+<section id="team">
+  <div class="wrap">
+    <div class="kicker reveal">The team</div>
+    <h2 class="reveal">Six roles. One feature. Zero rubber stamps.</h2>
+    <p class="lead reveal">Each feature is a vertical slice owned end-to-end by specialists who check each other — the developer's "it works" is a claim to verify, never evidence.</p>
+    <div class="grid cols-3">
+      <div class="card reveal"><div class="emoji">🎯</div><h3>Manager</h3><p>Context, dispatch, the final on-device gate, and you. Writes zero feature code — orchestrates and judges.</p><span class="tag">main thread</span></div>
+      <div class="card reveal"><div class="emoji">🔍</div><h3>Recon Analyst</h3><p>Audits the status quo first: tool gaps, what's done vs. left, what existing code to reuse. Read-only.</p><span class="tag">phase 1</span></div>
+      <div class="card reveal"><div class="emoji">🎨</div><h3>Creative Director</h3><p>Writes the feature brief — UX, interaction, the juice plan — and later judges the fun gate against it.</p><span class="tag">first + last</span></div>
+      <div class="card reveal"><div class="emoji">⚙️</div><h3>Logic Developer</h3><p>Gameplay systems: state, economy, simulation, input. Real tests on the real call path, no stubs.</p><span class="tag">per feature</span></div>
+      <div class="card reveal"><div class="emoji">✨</div><h3>Animation Developer</h3><p>The game-feel pass on the same files — tweens, particles, shake, hitstop. Feedback only, never logic.</p><span class="tag">after logic</span></div>
+      <div class="card reveal"><div class="emoji">🧪</div><h3>Tester</h3><p>Full regression every round: suite green, fresh screenshot vs. the design contract, invariants intact.</p><span class="tag">the gate</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="gates">
+  <div class="wrap">
+    <div class="kicker reveal">The gates</div>
+    <h2 class="reveal">"Done" is a loop condition, not an opinion.</h2>
+    <p class="lead reveal">The build loop is a deterministic Workflow <em>program</em> — the gates are <code>while</code>-loop conditions in code. A feature that fails either gate goes back with a specific, reproducible punch list. There is no "looks fine to me."</p>
+    <div class="pipeline reveal">brief → build logic → juice pass → <b>🧪 TEST GATE</b> → <i>🎨 CREATIVE GATE</i> → fix → (repeat) → done</div>
+    <div class="grid cols-3">
+      <div class="card gate reveal"><h3>🧪 Test gate — rapid</h3><p>Headless GDScript suite must exit 0, every acceptance criterion asserted on the real call path, a fresh rendered frame checked against the design contract. Runs on a fast simulation — seconds per round, so fix iterations stay cheap.</p></div>
+      <div class="card gate fun reveal"><h3>🎨 Creative gate — fun</h3><p>Once correct, the running feature is judged against its own brief: readable, responsive, satisfying, on-theme, fair. A dead tap or a silent failure is a defect, even with green tests.</p></div>
+      <div class="card gate device reveal"><h3>📱 On-device final pass</h3><p>The Manager builds, installs, and launches the fresh APK on real hardware — confirming the features work <em>together</em> and feel right in-hand. Once, at the end, instead of minutes per round.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="engine">
+  <div class="wrap">
+    <div class="kicker reveal">The engine</div>
+    <h2 class="reveal">Deterministic order. Dynamic scale. Survives anything.</h2>
+    <p class="lead reveal">Built on Claude Code's dynamic Workflow engine — the step order is code, the fleet size adapts to your machine, and the whole run is durable.</p>
+    <ul class="checks">
+      <li class="reveal"><strong>Resumable across cutoffs.</strong> Durable state is written the moment each feature clears a gate. A crash, a pause, or a usage-limit cutoff resumes without redoing approved work.</li>
+      <li class="reveal"><strong>Usage watchdog.</strong> A zero-token poller watches your 5-hour usage window; near the cap, agents wind down gracefully and write handoff reports instead of dying mid-thought.</li>
+      <li class="reveal"><strong>Capacity-sized waves.</strong> Parallel builders are sized to your host's free memory — a constrained machine never gets OOM-killed.</li>
+      <li class="reveal"><strong>49 companion skills, no fallback.</strong> Godot domain depth (GodotPrompter) plus Karpathy's LLM coding-discipline guidelines, installed project-local. A missing skill stops the run loudly — never a silent downgrade.</li>
+      <li class="reveal"><strong>Discipline built in.</strong> Developers state assumptions explicitly, make surgical changes, and never gold-plate; the Tester rejects overcomplicated or out-of-scope diffs even when tests are green.</li>
+    </ul>
+
+    <div class="spec-note reveal">
+      <h3>⚠️ Bring a real spec — the skill verifies, it doesn't guess.</h3>
+      <p>The pipeline's entire value is checking work against a contract, so output quality is capped by the spec you put in. Spend ten minutes with extended thinking ("ultrathink") to pressure-test the idea — mechanics, edge cases, acceptance criteria — and write it down. Then invoke.</p>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="kicker reveal">Install</div>
+    <h2 class="reveal">Install once. It bootstraps the rest.</h2>
+    <p class="lead reveal">Requirements: <strong>Claude Code</strong>, <strong>Godot 4.x</strong> on PATH, <strong>Node.js</strong>. For on-device verification: <code>adb</code> + an Android device (tests still gate without one). Companion skills install themselves on first run.</p>
+    <div class="install-box reveal" style="margin-left:0">
+      <div class="bar"><span class="dot g"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:6px">Claude Code</span></div>
+      <pre>/plugin marketplace add Varalix-Digitech-Solutions/game-build-team-skill
+/plugin install game-build-team@game-build-team</pre>
+    </div>
+    <div class="cta-row reveal" style="justify-content:flex-start">
+      <a class="btn btn-primary" href="https://github.com/Varalix-Digitech-Solutions/game-build-team-skill">Read the docs on GitHub ↗</a>
+      <a class="btn btn-ghost" href="https://clone-team.varalix.com/">Sister skill: clone-team ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>🛠️👾 <strong>game-build-team</strong> — MIT License · <a href="https://github.com/Varalix-Digitech-Solutions">Varalix Digitech Solutions</a></div>
+    <div><a href="https://github.com/Varalix-Digitech-Solutions/game-build-team-skill">GitHub</a> · <a href="https://github.com/Varalix-Digitech-Solutions/game-build-team-skill/issues">Issues</a> · <a href="llms.txt">llms.txt</a></div>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+</script>
+</body>
+</html>
